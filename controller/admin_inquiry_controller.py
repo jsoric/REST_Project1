@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request
 from flask_restplus import Namespace, Resource, fields
 from model import db
 from model.inquiry import Inquiry

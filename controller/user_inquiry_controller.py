@@ -1,3 +1,4 @@
+from flask import request
 from flask_restplus import Namespace, Resource, fields
 from model import db
 from model.inquiry import Inquiry
@@ -19,8 +20,22 @@ inquiry_dto = api.model('Inquiry', {
     'updated': fields.DateTime(required=True, description='Updated')
 })
 
+@api.route('/create-inquiry')
+class PostInquiries(Resource):
+    @api.doc(description='Delete user', responses={200: 'Success', 401: 'Unauthorized'}, security='Bearer Auth')
+    @api.marshal_list_with(inquiry_create)
+    @api.param('title', description='Title', type='string')
+    @api.param('message', description='Message', type='string')
+    @authenticated
+    def post(current_user, self):
+        inquiry = Inquiry(title=request.args.get('title'), message=request.args.get('message'), user_id=current_user.id)
+        db.session.add(inquiry)
+        db.session.commit()
+
+        return inquiry, 201  
+
 @api.route('/list-inquiries')
-class Inquiries(Resource):
+class GetInquiries(Resource):
     @api.doc(description='List all inquiries', responses={200: 'Success', 401: 'Unauthorized'}, security='Bearer Auth')
     @api.marshal_list_with(inquiry_dto)
     @authenticated
@@ -40,12 +55,4 @@ class Inquiries(Resource):
 
         return output   
 
-    @api.doc(description='Delete user', responses={200: 'Success', 401: 'Unauthorized'}, security='Bearer Auth')
-    @api.param('email', description='Email', type='string')
-    @authenticated
-    def post(current_user, self):
-        inquiry = Inquiry(title=api.payload['title'], message=api.payload['message'], user_id=current_user.id)
-        db.session.add(inquiry)
-        db.session.commit()
-
-        return inquiry, 201  
+    
